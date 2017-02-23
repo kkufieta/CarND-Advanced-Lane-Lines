@@ -1,12 +1,9 @@
-## Advanced Lane Finding
+# Advanced Lane Finding Project
 #### Finding lane lines using computer vision
 
 The goal of this project was to write a software pipeline to identify the lane boundaries in a video. In this writeup I'll explain how I did that.
 
-**Advanced Lane Finding Project**
----
-
-The goals / steps of this project are the following:
+I followed these steps to build my pipeline:
 
 * Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
 * Apply a distortion correction to raw images.
@@ -27,13 +24,13 @@ The goals / steps of this project are the following:
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
-## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+## How I completed the [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
+I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ### Writeup / README
 
 #### Task
-Provide a Writeup / README that includes all the rubric points and how you addressed each one. The Writeup / README should include a statement and supporting figures / images that explain how each rubric item was addressed, and specifically where in the code each step was handled.
+1. Provide a Writeup / README that includes all the rubric points and how you addressed each one. The Writeup / README should include a statement and supporting figures / images that explain how each rubric item was addressed, and specifically where in the code each step was handled.
 
 #### Solution
 You're reading it!
@@ -45,13 +42,22 @@ You're reading it!
 2. OpenCV functions or other methods were used to calculate the correct camera matrix & distortion coefficients using the calibration chessboard images provided in the repository.
 3. The distortion matrix should be used to undistort one of the calibration images provided as a demonstration that the calibration is correct. Example of undistorted calibration image is included in the writeup.
 
+
+I computed the camera matrix and distortion coefficients by doing the following steps:
+
+1. Convert image to grayscale using `cv2.cvtColor(...)`
+2. Use `cv2.findChessboardCorners(...)` to get the chessboard corners
+3. Append the obtained chessboard corners to the image points, append corresponding 3D points to object points
+4. Take image points and object points to calculate distortion coefficients and camera matrix with `cv2.calibrateCamera(...)`
+5. Undistort images using `cv2.undistort(...)`. Test on chessboard images (see below).
+
 The code for this step is contained in the first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
 
-I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
+I started by preparing "object points", which are the (x, y, z) coordinates of the chessboard corners in the world. I assumed the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` were appended with a copy of it every time I successfully detected all chessboard corners in a test image.  `imgpoints` were appendeded with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image1]
+![Original and undistorted images][image1]
 
 ###Pipeline (single images)
 
