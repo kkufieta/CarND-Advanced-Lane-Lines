@@ -80,7 +80,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 3. An example of a distortion corrected image should be included in the writeup.
 
 #### Solution
-After I calibrated the camera and saved the camera matrix and distortion coefficients in global variables, I packed the image undistortion in a function called `cal_undistort()` (Lines 102 - 104). To demonstrate this step, I applied it to a road image taken from the front camera of a car (see image below) (Lines 130 - 140). I apply image undistortion to all images I handle.
+After I calibrated the camera and saved the camera matrix and distortion coefficients in global variables (Lines 99 - 100), I packed the image undistortion in a function called `cal_undistort()` (Lines 102 - 104). To demonstrate this step, I applied it to a road image taken from the front camera of a car (see image below) (Lines 130 - 140). I apply image undistortion to all images I handle.
 ![alt text][image2]
 
 
@@ -111,7 +111,7 @@ Next I moved on to investigate the various gradients (Lines 298 - 391). I applie
 
 After that, I combined the gradients in 3 different combinations to determine which one works best:
 
-1. gradx & grady or mag
+1. gradx & grady | mag
 2. gradx | grady | dir & mag
 3. gradx & grady | dir & mag
 
@@ -127,7 +127,7 @@ Here are a few examples of binary images where I applied the combined thresholdi
 3. Transformed images should be included in the writeup.
 
 #### Solution
-The code for my perspective transform is implemented in a function called `warp(...)` (Lines 469 - 501). In order to perform a perspective transform, we need to pick source points (from the cameras view) and the corresponding desired points in the bird view. This can be done by taking an image where the lanes are straight, and manually choose the points from the original and in the destination image that does not exist yet. I chose the hardcode the source and destination points in the following manner (Lines 475 - 485):
+The code for my perspective transform is implemented in a function called `warp(...)` (Lines 469 - 501). In order to perform a perspective transform, we need to pick source points (from the cameras view) and the corresponding desired points in the bird view. This can be done by taking an image where the lanes are straight, and manually choose the points from the original and in the destination image that does not exist yet. I chose to hardcode the source and destination points in the following manner (Lines 475 - 485):
 
 ```
     src = np.float32([[275, 680],
@@ -194,7 +194,7 @@ I fit new polynomials to x and y in world space, using the converted points. Nex
 
 To get the relative car position, I calculated the left and right lane positions at the height of the car and used those to get the middle of the lane in pixel values. I determined the distance of the car relative to the middle of the lane, and converted that to meters using the conversion mentioned above.
 
-#### Task: Plot results abck down on lane area
+#### Task: Plot results back down on lane area
 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 #### Solution
@@ -211,7 +211,9 @@ I tested my pipeline `detect_lines(...)` on provided test images (Lines 677 - 69
 
 #### Solution
 I applied the pipeline to all three videos (Lines 762 - 780).
-Here's a [link to my video result](processed_video.mp4). I did the challenge videos for fun and out of curiousity, but it didn't go well.
+Here's a [link to my video result](processed_video.mp4). 
+
+I did the challenge videos for fun and out of curiousity, but it didn't go well. The project video works reasonably well, there are only a few outliers when there is a lot of shadow. By adding a filter I could solve that. It's hard to predict what the car would do, but at that speed the lanes would probably be detected well again before the car would go off the street.
 
 ---
 
@@ -222,6 +224,8 @@ Here's a [link to my video result](processed_video.mp4). I did the challenge vid
 
 #### Solution
 I implemented a working pipeline to detect lane lines in certain conditions. The pipeline works well for the project video, but the conditions are close to perfect in that video. It fails only rarely when the shadows are large, and that could be avoided if I implemented a simple filter to throw out outliers (badly detected lines). 
+
+My pipeline does not work for the challenge videos, because there are too many other "lines" that it detects as lane lines. I might be able to solve that for the easier challenge video by cropping the sight area of the car (like we did in Project 1), but that would not work for the harder challenge video (probably?). I'd love to learn how those challenge videos can be solved.
 
 Here's what I'd like to do to improve my pipeline: Check my detected lines for sanity. Make sure they're parallel, that the calculated radius and vehicle position is only slightly deviating from the previous one. That way I can tell if I truly detected lane lines, or if I failed at detecting lines. 
 
