@@ -19,14 +19,18 @@ I followed these steps to build my pipeline:
 [drawCorners]: ./examples/drawCorners.png "Draw chessboard corners"
 [image1]: ./examples/undistort_output.png "Undistorted"
 [image2]: ./examples/undistort_road.png "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[Schannel]: ./examples/Schannel.png "Binary S channel examples"
+[Rchannel]: ./examples/Rchannel.png "Binary R channel examples"
+[image3]: ./examples/binary_combo_example.png "Binary Example"
+[image4]: ./examples/warped_straight_lines.png "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
 ## How I completed the [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+---
 
 ### Writeup / README
 
@@ -35,6 +39,8 @@ I will consider the rubric points individually and describe how I addressed each
 
 #### Solution
 You're reading it!
+
+---
 
 ### Camera Calibration
 
@@ -63,6 +69,8 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 ![Draw chessboard corners][drawCorners]
 ![Original and undistorted images][image1]
 
+---
+
 ###Pipeline (single images)
 
 #### Task
@@ -71,47 +79,81 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 3. An example of a distortion corrected image should be included in the writeup.
 
 #### Solution
-I have combined the undistortion in a function called `cal_undistort()`. To demonstrate this step, I applied it to a road image taken from the front camera of a car (see image below).
+After I calibrated the camera and saved the camera matrix and distortion coefficients in global variables, I packed the image undistortion in a function called `cal_undistort()`. To demonstrate this step, I applied it to a road image taken from the front camera of a car (see image below). I apply image undistortion to all images I handle.
 ![alt text][image2]
 
 
 #### Task
-2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+1. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image containing likely lane pixels.  
+3. Provide an example of a binary image result.
 
 #### Solution
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+To find out which methods I wanted to use for lane pixel identification, I implemented several functions to calculate gradients and color transforms:
 
-![alt text][image3]
+1. `abs_sobel_thresh(...)` calculates the Sobel x and y and takes the absolute value of the gradient. It then applies thresholds to the image to create and return a binary image.
+2. `mag_thresh(...)` calculates the Sobel x and y, then computes the magnitude of the gradient and applies thresholds to create and return a binary image.
+3. `dir_threshold(...)` applies Sobel x and y, then computes the direction of the gradient and applies thresholds to create and return a binary image.
+4. `hls_select(...)` transforms the given RGB image to a HLS image space and picks only the S channel. It then applies thresholds to the S-channel image to create and return a binary image.
+5. `rgb_select(...)` takes the RGB image and picks only the R channel. It then applies thresholds to the R-channel image to create and return a binary image.
+
+I looked first at the S channel and R channel binary images with different thresholds to determine if they have the desired effect of finding lane lines. You can see the results in the images below. I determined that the R channel does not provide any better or additional information to the S channel, so I dropped using it more. I determined to use S channel values between 80 and 255.
+
+![Various S channel thresholds][Schannel]
+![Various R channel thresholds][Rchannel]
+
+Next I moved on to investigate the various gradients. I applied various kernel sizes and thresholds and determined heuristically what worked best for each gradient in x & y direction (gradx & grady), magnitude of the gradient (mag_binary) and direction of the gradient (dir_binary). I chose the following thresholds and kernels:
+
+1. gradx: kernel size 3, keep values between 20 and 150
+2. grady: kernel size 3, keep values between 20 and 255
+3. mag_binary: kernel size 7, keep values between 50 and 200
+4. dir_binary: kernel size 15, keep values between 0.6 and 1.3
+
+After that, I combined the gradients in 3 different combinations to determine which one works best:
+
+1. gradx & grady or mag
+2. gradx | grady | dir & mag
+3. gradx & grady | dir & mag
+
+I determined that latter (gradx & grady | dir & mag) is the best combination. I combined my choice in a function called `filter_lanes(...)` to use it in my pipeline. You can find images corresponding to those investigations in my jupyter notebook located in `advanced_lane_finding.ipynb`.
+
+Here are a few examples of binary images where I applied the combined thresholing. As you can see, the lanes are clearly visible - but so are also shadows that I predict will cause some trouble. But for now, that's the best I could do (and we'll see later that it works).
+
+![Binary images][image3]
 
 #### Task
-3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+1. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+2. An OpenCV function or other method has been used to correctly rectify each image to a "birds-eye view".
+3. Transformed images should be included in the writeup.
 
 #### Solution
+The code for my perspective transform is implemented in a function called `warp(...)`. In order to perform a perspective transform, we need to pick source points (from the cameras view) and the corresponding desired points in the bird view. This can be done by taking an image where the lanes are straight, and manually choose the points from the original and in the destination image that does not exist yet. These points define the perspective transform, and are used to get the perspective transform matrix. I got the perspective transform matrix by using `cv2.getPerspectiveTransform(...)` which takes the destination and source points as parameters.
+
 The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
 
 ```
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
+    src = np.float32([[275, 680],
+                    [595, 450],
+                    [687, 450],
+                    [1050, 680]])
+    width = img_size[0]
+    height = img_size[1]
+    offset = 300
+    dst = np.float32([[offset, height],
+                    [offset, 0],
+                    [width - offset, 0],
+                    [width - offset, height]])
 
 ```
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 275, 680      | 300, 720      | 
+| 595, 450      | 300, 0        |
+| 687, 450      | 980, 0        |
+| 1050, 680     | 980, 720      |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image. The latter helped tremendously to fine tune the source points such that the lines are truly parallel in birds view.
 
 ![alt text][image4]
 
