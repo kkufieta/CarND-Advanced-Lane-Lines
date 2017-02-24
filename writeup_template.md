@@ -23,8 +23,9 @@ I followed these steps to build my pipeline:
 [Rchannel]: ./examples/Rchannel.png "Binary R channel examples"
 [image3]: ./examples/binary_combo_example.png "Binary Example"
 [image4]: ./examples/warped_straight_lines.png "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[binaryBirdView]: ./examples/binaryBirdView.png "Binary Bird View"
+[image5]: ./examples/color_fit_lines.png "Fit Visual"
+[image6]: ./examples/example_output.png "Output"
 [video1]: ./project_video.mp4 "Video"
 
 ## How I completed the [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -44,7 +45,7 @@ You're reading it!
 
 ### Camera Calibration
 
-#### Task
+#### Task: Camera matrix and distortion coefficients
 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 2. OpenCV functions or other methods were used to calculate the correct camera matrix & distortion coefficients using the calibration chessboard images provided in the repository.
 3. The distortion matrix should be used to undistort one of the calibration images provided as a demonstration that the calibration is correct. Example of undistorted calibration image is included in the writeup.
@@ -73,7 +74,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ###Pipeline (single images)
 
-#### Task
+#### Task: Distortion-corrected image
 1. Provide an example of a distortion-corrected image.
 2. Distortion correction that was calculated via camera calibration has been correctly applied to each image.
 3. An example of a distortion corrected image should be included in the writeup.
@@ -83,7 +84,7 @@ After I calibrated the camera and saved the camera matrix and distortion coeffic
 ![alt text][image2]
 
 
-#### Task
+#### Task: Use of color transforms & gradients to generate thresholded binary images
 1. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image containing likely lane pixels.  
 3. Provide an example of a binary image result.
 
@@ -120,7 +121,7 @@ Here are a few examples of binary images where I applied the combined thresholin
 
 ![Binary images][image3]
 
-#### Task
+#### Task: Perspective transform
 1. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 2. An OpenCV function or other method has been used to correctly rectify each image to a "birds-eye view".
 3. Transformed images should be included in the writeup.
@@ -157,25 +158,46 @@ I verified that my perspective transform was working as expected by drawing the 
 
 ![alt text][image4]
 
-#### Task
-4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+#### Task: Identify lane-line pixels & fit a polynomial
+1. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+2. Methods have been used to identify lane pixles in the rectified binary image.
+3. The left & right line have been identified and fit with a curved functional form (e.g. spine or polynomial).
+4. Include example images with line pixels identified and a fit overplotted.
 
 #### Solution
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+Once I finished the filter (getting binary images) and the transformation transform, I had binary images of the lane lines in bird's view (see image below). 
+
+![alt text][binaryBirdView]
+
+Using those, you can implement line detection based on a histogram and sliding windows. I did that in the function called `detect_lines(...)` which takes the warped image in bird's view as an input. The histogram in the function will detect where the lines clearly stand out. By splitting the image in two (we assume the car is between the lines, we assume that the lane lines are where the highest peak is in each of the halves. We save those values as `leftx_base` and `rightx_base`. Next, we choose a number of sliding windows and their size, and we set their current position based on where we found the left & right lanes from our histogram. Next, we take all the nonzero points within the sliding window and attach them to the lists of values for the left & right lane. If we have enough pixels identified in the current region, we adjust the x position of the sliding window based on where the mean of the nonzero pixels is, and move the sliding windows up. Once we searched that way through the entire image, we move on to fit a second order polynomial function to the pixels found for the left and right lane with `np.polyfit(...)`. I save the results in the variables `left_fit` and `right_fit`.
+
+You can see two examples of the sliding windows in action in the image below.
 
 ![alt text][image5]
 
-#### Task
-5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+Note: I used the code from the lecture here, this was very advanced and I would not have been able to come up with this myself. Hopefully soon though, I'm learning!
+
+#### Task: Calculate radius of curvature and relative position of vehicle
+1. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 #### Solution
-I did this in lines # through # in my code in `my_other_file.py`
 
-#### Task
+I calculated the radius of curvature and the relative position of the vehicle in `detect_lines(...)`, right after I fitted polynomials to the left and right lanes. I used a conversion from pixel space to meters like this:
+
+```
+    ym_per_pix = 30/720 # meters per pixel in y dimension
+    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+```
+
+I fit new polynomials to x and y in world space, using the converted points. Next, I calcualted the radius of curvature based on the equation given in the lecture.
+
+To get the relative car position, I calculated the left and right lane positions at the height of the car and used those to get the middle of the lane in pixel values. I determined the distance of the car relative to the middle of the lane, and converted that to meters using the conversion mentioned above.
+
+#### Task: Plot results abck down on lane area
 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 #### Solution
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image. I provided two example images to compare the values. As you can see, the radius of curvature is reasonable: For an almost straight road it is estimated as a 1 km radius, and for a slight turn left, it is estimated as 337 m, which seems to make sense. In the lecture it was mentioned that the first left curve in the project video has a radius of 1 km. My estimates vary between 400 - 500 m, so I am probably off by a factor of 2, which isn't too bad for a start.
 
 ![alt text][image6]
 
@@ -183,17 +205,17 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 ###Pipeline (video)
 
-#### Task
+#### Task: Apply pipeline to video
 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
 #### Solution
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./processed_video.mp4)
 
 ---
 
 ###Discussion
 
-#### Task
+#### Task: Drawbacks of Pipeline, ToDos for the future
 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 #### Solution
