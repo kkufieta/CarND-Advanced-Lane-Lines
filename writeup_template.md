@@ -42,6 +42,7 @@ I will consider the rubric points individually and describe how I addressed each
 You're reading it!
 
 Note: All code lines I refer to from now on are found in file `advanced_lane_finding.py`
+
 ---
 
 ### Camera Calibration
