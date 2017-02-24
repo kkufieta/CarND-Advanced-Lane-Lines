@@ -41,7 +41,7 @@ I will consider the rubric points individually and describe how I addressed each
 #### Solution
 You're reading it!
 
-Note: All code lines I refer to from now on are found in file `examples/advanced_lane_finding.py`
+Note: I wrote my code originally in [a jupyter notebook file](https://github.com/kkufieta/CarND-Advanced-Lane-Lines/blob/master/advanced_lane_finding.ipynb). All code lines I refer to from now on are found in the extracted [python file](https://github.com/kkufieta/CarND-Advanced-Lane-Lines/blob/master/examples/advanced_lane_finding.py).
 
 ---
 
