@@ -69,7 +69,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ---
 
-###Pipeline (single images)
+### Pipeline (single images)
 
 #### Task: Distortion-corrected image
 1. Provide an example of a distortion-corrected image.
@@ -214,7 +214,7 @@ I did the challenge videos for fun and out of curiousity, but it didn't go well.
 
 ---
 
-###Discussion
+### Discussion
 
 #### Task: Drawbacks of Pipeline, ToDos for the future
 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
